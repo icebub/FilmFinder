@@ -3,9 +3,9 @@ from transformers import BertModel
 
 
 class BaseModel(nn.Module):
-    def __init__(self, num_classes, freeze_bert=False):
+    def __init__(self, pretrain_model, num_classes, freeze_bert=False):
         super(BaseModel, self).__init__()
-        self.model = BertModel.from_pretrained("bert-base-uncased")
+        self.model = BertModel.from_pretrained(pretrain_model)
         self.classifier = nn.Linear(self.model.config.hidden_size, num_classes)
         if freeze_bert:
             for param in self.model.parameters():
