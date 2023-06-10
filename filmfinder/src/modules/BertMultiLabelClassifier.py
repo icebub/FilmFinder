@@ -12,9 +12,7 @@ class BertMultiLabelClassifier(pl.LightningModule):
         self.loss_fn = nn.BCEWithLogitsLoss()
 
     def forward(self, input_ids, attention_mask):
-        outputs = self.model(input_ids, attention_mask=attention_mask)
-        x = outputs["pooler_output"]
-        return x
+        return self.model(input_ids, attention_mask=attention_mask)
 
     def training_step(self, batch, batch_idx):
         input_ids, attention_mask, labels = batch
@@ -28,18 +26,9 @@ class BertMultiLabelClassifier(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         input_ids, attention_mask, labels = batch
         logits = self(input_ids, attention_mask)
-        loss = nn.BCEWithLogitsLoss()(logits, labels.float())
+        loss = self.loss_fn(logits, labels.float())
         self.log(
             "val_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True
-        )
-        self.accuracy(logits, labels)
-        self.log(
-            "val_acc",
-            self.accuracy,
-            on_step=False,
-            on_epoch=True,
-            prog_bar=True,
-            logger=True,
         )
 
     def configure_optimizers(self):
