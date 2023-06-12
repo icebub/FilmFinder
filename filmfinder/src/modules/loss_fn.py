@@ -11,7 +11,7 @@ class BalancedLogLoss(torch.nn.Module):
 
     def forward(self, input, target):
         num_obs = target.sum(dim=0)
-        class_weight = num_obs.sum() / (self.num_classes * num_obs)
+        class_weight = num_obs.sum() / (self.num_classes * (num_obs + self.eps))
 
         log_loss = F.binary_cross_entropy_with_logits(input, target, reduction="none")
         weighted_log_loss = class_weight * target * log_loss
@@ -22,7 +22,7 @@ class BalancedLogLoss(torch.nn.Module):
 def balanced_log_loss(y_pred, label):
     num_classes = label.shape[1]
     num_obs = np.sum(label, axis=0)
-    class_weight = num_obs.sum() / (num_classes * num_obs)
+    class_weight = num_obs.sum() / (num_classes * num_obs + 1e-15)
 
     y_pred = np.clip(y_pred, 1e-15, 1 - 1e-15)
     log_loss = -(label * np.log(y_pred) + (1 - label) * np.log(1 - y_pred))

@@ -39,7 +39,7 @@ class MovieGenres:
         # drop row original_language != en
         metadata = metadata[metadata["original_language"] == "en"]
         # drop row that genres is empty
-        metadata = metadata[metadata["genres"] != "[]"]
+        # metadata = metadata[metadata["genres"] != "[]"]
 
         self.overviews = metadata["overview"].values
         genres = metadata["genres"].values

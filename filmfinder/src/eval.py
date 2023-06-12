@@ -84,17 +84,19 @@ test_loader = DataLoader(
 all_preds = []
 all_labels = []
 for batch in test_loader:
-    input_ids = batch[0].to(device)
-    attention_mask = batch[1].to(device)
-    labels = batch[2].to(device)
+    with torch.no_grad():
+        input_ids = batch[0].to(device)
+        attention_mask = batch[1].to(device)
+        labels = batch[2].to(device)
 
-    outputs = model(input_ids, attention_mask)
-    _, predicted = torch.max(outputs.data, 1)
-    labels = labels.cpu().numpy()
-    predicted = predicted.cpu().numpy()
+        outputs = model(input_ids, attention_mask)
+        labels = labels.cpu().numpy()
+        predicted = outputs.cpu().numpy()
 
-    all_preds.extend(predicted)
-    all_labels.extend(labels)
+        all_preds.extend(predicted)
+        all_labels.extend(labels)
+
+    break
 
 
 all_labels = np.array(all_labels)

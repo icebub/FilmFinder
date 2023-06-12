@@ -1,4 +1,6 @@
+import json
 import os
+from datetime import datetime
 
 import pytorch_lightning as pl
 import torch
@@ -19,8 +21,12 @@ BATCH_SIZE = 8
 NUM_WORKERS = 0
 SEED = 42
 
-
 abs_folder = os.path.dirname(os.path.abspath(__file__))
+exp_id = datetime.now().strftime("%Y%m%d%H%M")
+save_path = f"{abs_folder}/experiments/{exp_id}"
+if not os.path.exists(save_path):
+    os.makedirs(save_path)
+
 data_path = f"{abs_folder}/data/movies_metadata.csv"
 movie_dataset = MovieGenres(data_path)
 texts, labels = movie_dataset.get_dataset()
@@ -28,6 +34,15 @@ class_mapping = movie_dataset.mapping
 reverse_mapping = movie_dataset.reverse_mapping
 
 num_class = len(class_mapping)
+
+save_label_data = {
+    "class_mapping": class_mapping,
+    "reverse_mapping": reverse_mapping,
+    "num_class": num_class,
+}
+with open(f"{save_path}/label_data.json", "w") as f:
+    json.dump(save_label_data, f)
+
 
 tokenizer = BertTokenizer.from_pretrained(pretrain_model)
 model = BaseModel(pretrain_model, num_classes=num_class, freeze_bert=True)
@@ -52,7 +67,7 @@ early_stop_callback = EarlyStopping(
 )
 checkpoint_callback = ModelCheckpoint(
     monitor="val_loss",
-    dirpath="checkpoints",
+    dirpath=save_path,
     filename="best_model",
     save_top_k=1,
     mode="min",
@@ -69,20 +84,11 @@ val_loader = DataLoader(
 )
 
 trainer = pl.Trainer(
-    precision=16, callbacks=[early_stop_callback, checkpoint_callback], logger=logger
+    precision=16,
+    callbacks=[early_stop_callback, checkpoint_callback],
+    logger=logger,
+    max_epochs=100,
 )
 trainer.fit(pl_module, train_loader, val_loader)
 
 print("finish training")
-
-checkpoint_path = "checkpoints/best_model.ckpt"
-
-checkpoint_callback = ModelCheckpoint(monitor="val_loss", dirpath="checkpoints")
-
-model = checkpoint_callback.load_checkpoint(checkpoint_path).model
-
-test_loader = DataLoader(
-    test_set, batch_size=BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS
-)
-test_loss = trainer.test(model, test_loader)
-print("test loss: ", test_loss)
