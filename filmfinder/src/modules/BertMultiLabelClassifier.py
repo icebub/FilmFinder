@@ -1,14 +1,15 @@
 import pytorch_lightning as pl
 import torch
 from torch import nn
-from torchmetrics import Accuracy
+from torch.optim.lr_scheduler import LambdaLR
 
 
 class BertMultiLabelClassifier(pl.LightningModule):
-    def __init__(self, model, learning_rate=2e-5):
+    def __init__(self, model, learning_rate=2e-5, warmup_steps=500):
         super(BertMultiLabelClassifier, self).__init__()
         self.model = model
         self.learning_rate = learning_rate
+        self.warmup_steps = warmup_steps
         self.loss_fn = nn.BCEWithLogitsLoss()
 
     def forward(self, input_ids, attention_mask):
@@ -33,4 +34,7 @@ class BertMultiLabelClassifier(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.parameters(), lr=self.learning_rate)
-        return optimizer
+        scheduler = LambdaLR(
+            optimizer, lr_lambda=lambda epoch: min((epoch + 1) / self.warmup_steps, 1)
+        )
+        return [optimizer], [scheduler]

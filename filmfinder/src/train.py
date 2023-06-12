@@ -5,6 +5,7 @@ import torch
 from datasets.MovieGenres import CustomDataset, MovieGenres
 from models.BaseModel import BaseModel
 from modules.BertMultiLabelClassifier import BertMultiLabelClassifier
+from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
@@ -43,6 +44,13 @@ train_set, val_set = train_test_split(train_set, test_size=val_set_ratio)
 early_stop_callback = EarlyStopping(
     monitor="val_loss", min_delta=0.00, patience=3, verbose=True, mode="min"
 )
+checkpoint_callback = ModelCheckpoint(
+    monitor="val_loss",
+    dirpath="checkpoints",
+    filename="best_model",
+    save_top_k=1,
+    mode="min",
+)
 
 pl_module = BertMultiLabelClassifier(model)
 
@@ -53,6 +61,8 @@ val_loader = DataLoader(
     val_set, batch_size=BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS
 )
 
-trainer = pl.Trainer(precision=16, callbacks=[early_stop_callback])
+trainer = pl.Trainer(precision=16, callbacks=[early_stop_callback, checkpoint_callback])
 
 trainer.fit(pl_module, train_loader, val_loader)
+
+print("Done")
