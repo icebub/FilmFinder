@@ -17,6 +17,7 @@ pretrain_model = "bert-base-uncased"
 
 BATCH_SIZE = 8
 NUM_WORKERS = 0
+SEED = 42
 
 
 abs_folder = os.path.dirname(os.path.abspath(__file__))
@@ -39,8 +40,12 @@ test_set_ratio = 0.1
 val_set_ratio = 0.1
 train_set_ratio = 1 - test_set_ratio - val_set_ratio
 
-train_set, test_set = train_test_split(dataset, test_size=test_set_ratio)
-train_set, val_set = train_test_split(train_set, test_size=val_set_ratio)
+train_set, test_set = train_test_split(
+    dataset, test_size=test_set_ratio, random_state=SEED
+)
+train_set, val_set = train_test_split(
+    train_set, test_size=val_set_ratio, random_state=SEED
+)
 
 early_stop_callback = EarlyStopping(
     monitor="val_loss", min_delta=0.00, patience=3, verbose=True, mode="min"
