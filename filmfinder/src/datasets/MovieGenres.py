@@ -36,12 +36,15 @@ class MovieGenres:
     def __init__(self, file_path):
         metadata = pd.read_csv(file_path, low_memory=False)
         metadata = metadata.dropna(subset=["overview"])
+        # drop row original_language != en
+        metadata = metadata[metadata["original_language"] == "en"]
 
         self.overviews = metadata["overview"].values
         genres = metadata["genres"].values
 
         self.genre_count = self.genres_count(genres)
         self.mapping, self.reverse_mapping = self.genres_mapping(self.genre_count)
+
         self.label = self.create_label(genres, self.mapping)
 
     def get_dataset(self):
