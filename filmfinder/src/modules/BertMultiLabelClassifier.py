@@ -5,7 +5,7 @@ from torch.optim.lr_scheduler import LambdaLR
 
 
 class BertMultiLabelClassifier(pl.LightningModule):
-    def __init__(self, model, learning_rate=2e-5, warmup_steps=500):
+    def __init__(self, model, learning_rate=2e-5, warmup_steps=100):
         super(BertMultiLabelClassifier, self).__init__()
         self.model = model
         self.learning_rate = learning_rate

@@ -7,9 +7,10 @@ from models.BaseModel import BaseModel
 from modules.BertMultiLabelClassifier import BertMultiLabelClassifier
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+from pytorch_lightning.loggers import TensorBoardLogger
 from sklearn.model_selection import train_test_split
-from torch.utils.data import DataLoader, Dataset
-from transformers import AdamW, BertForSequenceClassification, BertTokenizer
+from torch.utils.data import DataLoader
+from transformers import BertTokenizer
 
 pretrain_model = "bert-base-uncased"
 
@@ -51,6 +52,7 @@ checkpoint_callback = ModelCheckpoint(
     save_top_k=1,
     mode="min",
 )
+logger = TensorBoardLogger("tb_logs", name="my_model")
 
 pl_module = BertMultiLabelClassifier(model)
 
@@ -61,8 +63,21 @@ val_loader = DataLoader(
     val_set, batch_size=BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS
 )
 
-trainer = pl.Trainer(precision=16, callbacks=[early_stop_callback, checkpoint_callback])
-
+trainer = pl.Trainer(
+    precision=16, callbacks=[early_stop_callback, checkpoint_callback], logger=logger
+)
 trainer.fit(pl_module, train_loader, val_loader)
 
-print("Done")
+print("finish training")
+
+checkpoint_path = "checkpoints/best_model.ckpt"
+
+checkpoint_callback = ModelCheckpoint(monitor="val_loss", dirpath="checkpoints")
+
+model = checkpoint_callback.load_checkpoint(checkpoint_path).model
+
+test_loader = DataLoader(
+    test_set, batch_size=BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS
+)
+test_loss = trainer.test(model, test_loader)
+print("test loss: ", test_loss)
