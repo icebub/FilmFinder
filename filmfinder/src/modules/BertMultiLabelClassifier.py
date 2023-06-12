@@ -1,16 +1,18 @@
 import pytorch_lightning as pl
 import torch
+from modules.loss_fn import BalancedLogLoss
 from torch import nn
 from torch.optim.lr_scheduler import LambdaLR
 
 
 class BertMultiLabelClassifier(pl.LightningModule):
-    def __init__(self, model, learning_rate=2e-5, warmup_steps=100):
+    def __init__(self, model, learning_rate=2e-5, warmup_steps=100, num_classes=20):
         super(BertMultiLabelClassifier, self).__init__()
         self.model = model
         self.learning_rate = learning_rate
         self.warmup_steps = warmup_steps
-        self.loss_fn = nn.BCEWithLogitsLoss()
+        # self.loss_fn = nn.BCEWithLogitsLoss()
+        self.loss_fn = BalancedLogLoss(num_classes=num_classes)
 
     def forward(self, input_ids, attention_mask):
         return self.model(input_ids, attention_mask=attention_mask)
