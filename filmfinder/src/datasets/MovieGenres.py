@@ -48,6 +48,15 @@ class MovieGenres:
         self.mapping, self.reverse_mapping = self.genres_mapping(self.genre_count)
 
         self.label = self.create_label(genres, self.mapping)
+        self.class_weight = self.find_class_weight(self.genre_count, self.mapping)
+
+    def find_class_weight(self, genre_count, class_mapping):
+        total = sum(genre_count.values())
+        class_weight = [0] * len(class_mapping)
+        for k, v in genre_count.items():
+            score = total / v
+            class_weight[class_mapping[k]] = score
+        return class_weight
 
     def get_dataset(self):
         return self.overviews, self.label

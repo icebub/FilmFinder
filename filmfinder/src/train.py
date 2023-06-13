@@ -20,6 +20,7 @@ pretrain_model = "bert-base-uncased"
 BATCH_SIZE = 8
 NUM_WORKERS = 0
 SEED = 42
+loss_fn = "BCEWithLogitsLoss"
 
 abs_folder = os.path.dirname(os.path.abspath(__file__))
 exp_id = datetime.now().strftime("%Y%m%d%H%M")
@@ -32,6 +33,7 @@ movie_dataset = MovieGenres(data_path)
 texts, labels = movie_dataset.get_dataset()
 class_mapping = movie_dataset.mapping
 reverse_mapping = movie_dataset.reverse_mapping
+class_weights = movie_dataset.class_weight
 
 num_class = len(class_mapping)
 
@@ -39,6 +41,11 @@ save_label_data = {
     "class_mapping": class_mapping,
     "reverse_mapping": reverse_mapping,
     "num_class": num_class,
+    "batch_size": BATCH_SIZE,
+    "seed": SEED,
+    "pretrain_model": pretrain_model,
+    "loss_fn": loss_fn,
+    "class_weights": class_weights,
 }
 with open(f"{save_path}/label_data.json", "w") as f:
     json.dump(save_label_data, f)
@@ -49,7 +56,7 @@ model = BaseModel(pretrain_model, num_classes=num_class, freeze_bert=True)
 
 
 dataset = CustomDataset(texts, labels, tokenizer, max_length=512)
-tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+tokenizer = BertTokenizer.from_pretrained(pretrain_model)
 
 test_set_ratio = 0.1
 val_set_ratio = 0.1
@@ -74,7 +81,7 @@ checkpoint_callback = ModelCheckpoint(
 )
 logger = TensorBoardLogger("tb_logs", name="my_model")
 
-pl_module = BertMultiLabelClassifier(model)
+pl_module = BertMultiLabelClassifier(model, loss_fn=loss_fn, class_weight=class_weights)
 
 train_loader = DataLoader(
     train_set, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_WORKERS

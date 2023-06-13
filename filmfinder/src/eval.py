@@ -28,6 +28,7 @@ movie_dataset = MovieGenres(data_path)
 texts, labels = movie_dataset.get_dataset()
 class_mapping = movie_dataset.mapping
 reverse_mapping = movie_dataset.reverse_mapping
+class_weights = movie_dataset.class_weight
 
 num_class = len(class_mapping)
 
@@ -51,29 +52,15 @@ train_set, val_set = train_test_split(
 early_stop_callback = EarlyStopping(
     monitor="val_loss", min_delta=0.00, patience=3, verbose=True, mode="min"
 )
-checkpoint_callback = ModelCheckpoint(
-    monitor="val_loss",
-    dirpath="checkpoints",
-    filename="best_model",
-    save_top_k=1,
-    mode="min",
-)
 
-pl_module = BertMultiLabelClassifier(model)
-train_loader = DataLoader(
-    train_set, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_WORKERS
-)
-val_loader = DataLoader(
-    val_set, batch_size=BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS
-)
+exp_id = 202306122035
+exp_path = f"{abs_folder}/experiments/{exp_id}"
 
-trainer = pl.Trainer(precision=16, callbacks=[early_stop_callback, checkpoint_callback])
-
-checkpoint_path = "checkpoints/best_model.ckpt"
+model_checkpoint = f"{exp_path}/best_model.ckpt"
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-pl_module = BertMultiLabelClassifier.load_from_checkpoint(checkpoint_path, model=model)
+pl_module = BertMultiLabelClassifier.load_from_checkpoint(model_checkpoint, model=model)
 model = pl_module.model
 model.to(device)
 
@@ -81,9 +68,11 @@ test_loader = DataLoader(
     test_set, batch_size=BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS
 )
 
+print("Evaluating on test set")
 all_preds = []
 all_labels = []
-for batch in test_loader:
+for idx, batch in enumerate(test_loader):
+    print(idx)
     with torch.no_grad():
         input_ids = batch[0].to(device)
         attention_mask = batch[1].to(device)
@@ -95,14 +84,14 @@ for batch in test_loader:
 
         all_preds.extend(predicted)
         all_labels.extend(labels)
-
     break
-
 
 all_labels = np.array(all_labels)
 all_preds = np.array(all_preds)
 
 print(all_labels.shape, all_preds.shape)
+print(all_labels)
+print(all_preds)
 
-loss = balanced_log_loss(all_preds, all_labels)
+loss = balanced_log_loss(all_preds, all_labels, class_weights)
 print("Loss: ", loss)

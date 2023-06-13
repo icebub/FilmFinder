@@ -5,3 +5,5 @@
 *tb_logs*
 *.ckpt
 *checkpoints*
+*experiments*
+*.ipynb
