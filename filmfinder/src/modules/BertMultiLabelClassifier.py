@@ -1,8 +1,9 @@
 import pytorch_lightning as pl
 import torch
-from modules.loss_fn import BalancedLogLoss
 from torch import nn
 from torch.optim.lr_scheduler import LambdaLR
+
+from filmfinder.src.modules.loss_fn import BalancedLogLoss
 
 
 class BertMultiLabelClassifier(pl.LightningModule):

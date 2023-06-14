@@ -49,7 +49,9 @@ def load_model(exp_id, device):
     return model, tokenizer, reverse_mapping, thresholds
 
 
-def predict(text, model, tokenizer, reverse_mapping, thresholds, max_length=512):
+def predict(
+    text, model, tokenizer, reverse_mapping, thresholds, device, max_length=512
+):
     encoding = tokenizer.encode_plus(
         text,
         add_special_tokens=True,
@@ -58,10 +60,17 @@ def predict(text, model, tokenizer, reverse_mapping, thresholds, max_length=512)
         padding="max_length",
         return_tensors="pt",
     )
-    input_ids = encoding["input_ids"].squeeze()
-    attention_mask = encoding["attention_mask"].squeeze()
+    input_ids = encoding["input_ids"]
+    attention_mask = encoding["attention_mask"]
 
     with torch.no_grad():
-        outputs = model(input_ids, attention_mask)
+        outputs = model(input_ids.to(device), attention_mask.to(device))
 
-    print(outputs.shape)
+    outputs = outputs.sigmoid().cpu().numpy().reshape(-1)
+
+    return_list = []
+    for label in range(len(outputs)):
+        if outputs[label] >= thresholds[label]:
+            return_list.append(reverse_mapping[str(label)])
+
+    return return_list
