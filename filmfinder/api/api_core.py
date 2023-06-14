@@ -18,7 +18,7 @@ from filmfinder.src.modules.BertMultiLabelClassifier import BertMultiLabelClassi
 from filmfinder.src.modules.loss_fn import balanced_log_loss
 
 
-def load_model(exp_id):
+def load_model(exp_id, device):
     abs_folder = os.path.dirname(os.path.abspath(__file__))
     exp_path = f"{abs_folder}/../experiments/{exp_id}"
 
@@ -43,6 +43,25 @@ def load_model(exp_id):
         model_checkpoint, model=model
     )
     model = pl_module.model
+    model.to(device)
     model.eval()
 
     return model, tokenizer, reverse_mapping, thresholds
+
+
+def predict(text, model, tokenizer, reverse_mapping, thresholds, max_length=512):
+    encoding = tokenizer.encode_plus(
+        text,
+        add_special_tokens=True,
+        truncation=True,
+        max_length=max_length,
+        padding="max_length",
+        return_tensors="pt",
+    )
+    input_ids = encoding["input_ids"].squeeze()
+    attention_mask = encoding["attention_mask"].squeeze()
+
+    with torch.no_grad():
+        outputs = model(input_ids, attention_mask)
+
+    print(outputs.shape)
