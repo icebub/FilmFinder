@@ -29,9 +29,10 @@ def load_model(exp_id, device):
     reverse_mapping = model_data["reverse_mapping"]
     num_class = model_data["num_class"]
 
-    with open(f"{exp_path}/eval_data.json", "r") as f:
-        eval_data = json.load(f)
+    with open(f"{exp_path}/eval_data.pkl", "rb") as f:
+        eval_data = pickle.load(f)
 
+    f1_mappping = eval_data["f1_mapping"]
     thresholds = eval_data["thresholds"]
 
     model_checkpoint = f"{exp_path}/best_model.ckpt"
@@ -46,11 +47,18 @@ def load_model(exp_id, device):
     model.to(device)
     model.eval()
 
-    return model, tokenizer, reverse_mapping, thresholds
+    return model, tokenizer, reverse_mapping, thresholds, f1_mappping
 
 
 def predict(
-    text, model, tokenizer, reverse_mapping, thresholds, device, max_length=512
+    text,
+    model,
+    tokenizer,
+    reverse_mapping,
+    thresholds,
+    f1_mappping,
+    device,
+    max_length=512,
 ):
     encoding = tokenizer.encode_plus(
         text,
@@ -67,10 +75,15 @@ def predict(
         outputs = model(input_ids.to(device), attention_mask.to(device))
 
     outputs = outputs.sigmoid().cpu().numpy().reshape(-1)
-
     return_list = []
     for label in range(len(outputs)):
         if outputs[label] >= thresholds[label]:
-            return_list.append(reverse_mapping[str(label)])
-
+            pred = str(format(outputs[label], ".3f"))
+            return_list.append(
+                {
+                    "genre": reverse_mapping[str(label)],
+                    "confidence": f1_mappping[label][pred],
+                }
+            )
+    return_list = sorted(return_list, key=lambda k: k["confidence"], reverse=True)
     return return_list

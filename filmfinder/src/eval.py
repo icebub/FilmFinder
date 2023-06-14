@@ -120,13 +120,13 @@ for label in range(n_labels):
         y_pred = (preds >= threshold).astype(int)
         f1_scores.append(metrics.f1_score(labels, y_pred))
 
-        threshold = round(threshold, 4)
+        threshold = str(format(threshold, ".3f"))
         if np.sum(y_pred) == 0:
             precision = last_precision
         else:
             precision = metrics.precision_score(labels, y_pred)
             last_precision = precision
-        f1_mappping[label][threshold] = precision
+        f1_mappping[label][threshold] = round(float(precision), 4)
 
     best_threshold = thresholds[np.argmax(f1_scores)]
     best_f1_score = np.max(f1_scores)

@@ -1,3 +1,5 @@
+from typing import List
+
 import torch
 from api_core import load_model, predict
 from fastapi import FastAPI
@@ -8,24 +10,34 @@ class BaseRequest(BaseModel):
     text: str
 
 
+class Genre(BaseModel):
+    genre: str
+    confidence: float
+
+
+class ResponseGenre(BaseModel):
+    genres: List[Genre]
+
+
 app = FastAPI()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Server is running on device: ", device)
 
 exp_id = "N_202306132218"
-model, tokenizer, reverse_mapping, thresholds = load_model(exp_id, device)
+model, tokenizer, reverse_mapping, thresholds, f1_mappping = load_model(exp_id, device)
 
-sample_text = "Led by Woody, Andy's toys live happily in his room until Andy's birthday brings Buzz Lightyear onto the scene. Afraid of losing his place in Andy's heart, Woody plots against Buzz. But when circumstances separate Buzz and Woody from their owner, the duo eventually learns to put aside their differences."
+sample_text = "Miles Morales catapults across the Multiverse, where he encounters a team of Spider-People charged with protecting its very existence. When the heroes clash on how to handle a new threat, Miles must redefine what it means to be a hero."
 return_list = predict(
-    sample_text, model, tokenizer, reverse_mapping, thresholds, device
+    sample_text, model, tokenizer, reverse_mapping, thresholds, f1_mappping, device
 )
 print("Sample text: ", sample_text)
 print("Predicted labels: ", return_list)
 
 
-@app.get("/predict")
-async def process_req(request: BaseRequest):
-    text = request.text
-
-    return {"text": text}
+@app.post("/overview")
+async def process_req(request: BaseRequest, response_model=ResponseGenre):
+    return_list = predict(
+        request.text, model, tokenizer, reverse_mapping, thresholds, f1_mappping, device
+    )
+    return return_list
