@@ -2,7 +2,6 @@ from collections import defaultdict
 
 import pandas as pd
 import torch
-import tqdm
 from torch.utils.data import Dataset
 
 

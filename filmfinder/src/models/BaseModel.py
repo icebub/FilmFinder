@@ -1,6 +1,5 @@
-import torch
 import torch.nn as nn
-from transformers import AdamW, BertForSequenceClassification, BertModel, BertTokenizer
+from transformers import BertForSequenceClassification
 
 
 class BaseModel(nn.Module):

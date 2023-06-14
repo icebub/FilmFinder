@@ -4,15 +4,13 @@ import pickle
 from collections import defaultdict
 
 import numpy as np
-import pytorch_lightning as pl
 import torch
 from datasets.MovieGenres import CustomDataset, MovieGenres
 from models.BaseModel import BaseModel
 from modules.BertMultiLabelClassifier import BertMultiLabelClassifier
 from modules.loss_fn import balanced_log_loss
-from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
+from pytorch_lightning.callbacks import EarlyStopping
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
-from pytorch_lightning.loggers import TensorBoardLogger
 from sklearn import metrics
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
@@ -40,7 +38,6 @@ tokenizer = BertTokenizer.from_pretrained(pretrain_model)
 model = BaseModel(pretrain_model, num_classes=num_class, freeze_bert=True)
 
 dataset = CustomDataset(texts, labels, tokenizer, max_length=512)
-tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
 
 test_set_ratio = 0.1
 val_set_ratio = 0.1
