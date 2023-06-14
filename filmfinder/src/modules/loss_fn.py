@@ -5,9 +5,11 @@ from torch import nn
 
 
 class BalancedLogLoss(nn.Module):
-    def __init__(self, class_weight):
+    def __init__(self, class_weight, device="cuda"):
         super(BalancedLogLoss, self).__init__()
-        self.class_weight = torch.tensor(class_weight, dtype=torch.float32)
+        self.class_weight = torch.tensor(
+            class_weight, dtype=torch.float32, device=device
+        )
 
     def forward(self, y_pred, label):
         y_pred = torch.sigmoid(y_pred)

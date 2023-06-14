@@ -20,7 +20,7 @@ pretrain_model = "bert-base-uncased"
 BATCH_SIZE = 8
 NUM_WORKERS = 0
 SEED = 42
-loss_fn = "BCEWithLogitsLoss"
+loss_fn = "BalancedLogLoss"
 
 abs_folder = os.path.dirname(os.path.abspath(__file__))
 exp_id = datetime.now().strftime("%Y%m%d%H%M")

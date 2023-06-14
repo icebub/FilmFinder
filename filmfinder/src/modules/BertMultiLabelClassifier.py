@@ -15,7 +15,6 @@ class BertMultiLabelClassifier(pl.LightningModule):
         class_weight=None,
     ):
         super(BertMultiLabelClassifier, self).__init__()
-
         self.model = model
         self.learning_rate = learning_rate
         self.warmup_steps = warmup_steps
