@@ -3,46 +3,45 @@ import os
 from datetime import datetime
 
 import pytorch_lightning as pl
-import torch
-from datasets.MovieGenres import CustomDataset, MovieGenres
-from models.BaseModel import BaseModel
-from modules.BertMultiLabelClassifier import BertMultiLabelClassifier
+from modules.utils import get_exp_path, load_config, prepare_training
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import TensorBoardLogger
-from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
-from transformers import BertTokenizer
-
-pretrain_model = "bert-base-uncased"
-
-
-BATCH_SIZE = 8
-NUM_WORKERS = 0
-SEED = 42
-loss_fn = "BalancedLogLoss"
 
 abs_folder = os.path.dirname(os.path.abspath(__file__))
 exp_id = datetime.now().strftime("%Y%m%d%H%M")
-save_path = f"{abs_folder}/experiments/{exp_id}"
+save_path = get_exp_path(exp_id)
 if not os.path.exists(save_path):
     os.makedirs(save_path)
 
+config = load_config()
+
+abs_folder = os.path.dirname(os.path.abspath(__file__))
 data_path = f"{abs_folder}/data/movies_metadata.csv"
-movie_dataset = MovieGenres(data_path)
-texts, labels = movie_dataset.get_dataset()
-class_mapping = movie_dataset.mapping
-reverse_mapping = movie_dataset.reverse_mapping
-class_weights = movie_dataset.class_weight
 
-num_class = len(class_mapping)
+pretrain_model = config["pretrain_model"]
+batch_size = config["batch_size"]
+num_workers = config["num_workers"]
+loss_fn = config["loss_fn"]
+seed = config["seed"]
 
+(
+    pl_module,
+    tokenizer,
+    train_set,
+    val_set,
+    test_set,
+    class_weights,
+    reverse_mapping,
+) = prepare_training(None, config, data_path)
+
+num_class = len(reverse_mapping.keys())
 save_label_data = {
-    "class_mapping": class_mapping,
     "reverse_mapping": reverse_mapping,
     "num_class": num_class,
-    "batch_size": BATCH_SIZE,
-    "seed": SEED,
+    "batch_size": batch_size,
+    "seed": seed,
     "pretrain_model": pretrain_model,
     "loss_fn": loss_fn,
     "class_weights": class_weights,
@@ -50,24 +49,6 @@ save_label_data = {
 with open(f"{save_path}/label_data.json", "w") as f:
     json.dump(save_label_data, f)
 
-
-tokenizer = BertTokenizer.from_pretrained(pretrain_model)
-model = BaseModel(pretrain_model, num_classes=num_class, freeze_bert=True)
-
-
-dataset = CustomDataset(texts, labels, tokenizer, max_length=512)
-tokenizer = BertTokenizer.from_pretrained(pretrain_model)
-
-test_set_ratio = 0.1
-val_set_ratio = 0.1
-train_set_ratio = 1 - test_set_ratio - val_set_ratio
-
-train_set, test_set = train_test_split(
-    dataset, test_size=test_set_ratio, random_state=SEED
-)
-train_set, val_set = train_test_split(
-    train_set, test_size=val_set_ratio, random_state=SEED
-)
 
 early_stop_callback = EarlyStopping(
     monitor="val_loss", min_delta=0.00, patience=3, verbose=True, mode="min"
@@ -81,13 +62,11 @@ checkpoint_callback = ModelCheckpoint(
 )
 logger = TensorBoardLogger("tb_logs", name="my_model")
 
-pl_module = BertMultiLabelClassifier(model, loss_fn=loss_fn, class_weight=class_weights)
-
 train_loader = DataLoader(
-    train_set, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_WORKERS
+    train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers
 )
 val_loader = DataLoader(
-    val_set, batch_size=BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS
+    val_set, batch_size=batch_size, shuffle=False, num_workers=num_workers
 )
 
 trainer = pl.Trainer(

@@ -1,73 +1,46 @@
 import json
 import os
 import pickle
+import sys
 from collections import defaultdict
 
 import numpy as np
 import torch
-from datasets.MovieGenres import CustomDataset, MovieGenres
-from models.BaseModel import BaseModel
-from modules.BertMultiLabelClassifier import BertMultiLabelClassifier
-from modules.loss_fn import balanced_log_loss
-from pytorch_lightning.callbacks import EarlyStopping
-from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from sklearn import metrics
-from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
-from transformers import BertTokenizer
 
-pretrain_model = "bert-base-uncased"
+from filmfinder.src.modules.loss_fn import balanced_log_loss
+from filmfinder.src.modules.utils import get_exp_path, load_config, prepare_training
 
-
-BATCH_SIZE = 8
-NUM_WORKERS = 0
-SEED = 42
-
+config = load_config()
 
 abs_folder = os.path.dirname(os.path.abspath(__file__))
 data_path = f"{abs_folder}/data/movies_metadata.csv"
-movie_dataset = MovieGenres(data_path)
-texts, labels = movie_dataset.get_dataset()
-class_mapping = movie_dataset.mapping
-reverse_mapping = movie_dataset.reverse_mapping
-class_weights = movie_dataset.class_weight
 
-num_class = len(class_mapping)
+batch_size = config["batch_size"]
+num_workers = config["num_workers"]
 
-tokenizer = BertTokenizer.from_pretrained(pretrain_model)
-model = BaseModel(pretrain_model, num_classes=num_class, freeze_bert=True)
+assert len(sys.argv) == 2, "Please provide experiment id"
+exp_id = sys.argv[1]
 
-dataset = CustomDataset(texts, labels, tokenizer, max_length=512)
-
-test_set_ratio = 0.1
-val_set_ratio = 0.1
-train_set_ratio = 1 - test_set_ratio - val_set_ratio
-
-train_set, test_set = train_test_split(
-    dataset, test_size=test_set_ratio, random_state=SEED
-)
-train_set, val_set = train_test_split(
-    train_set, test_size=val_set_ratio, random_state=SEED
-)
-
-early_stop_callback = EarlyStopping(
-    monitor="val_loss", min_delta=0.00, patience=3, verbose=True, mode="min"
-)
-
-exp_id = "N_202306132218"
-exp_path = f"{abs_folder}/../experiments/{exp_id}"
-
-model_checkpoint = f"{exp_path}/best_model.ckpt"
+(
+    pl_module,
+    tokenizer,
+    train_set,
+    val_set,
+    test_set,
+    class_weights,
+    reverse_mapping,
+) = prepare_training(exp_id, config, data_path)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-pl_module = BertMultiLabelClassifier.load_from_checkpoint(model_checkpoint, model=model)
 model = pl_module.model
 model.to(device)
 model.eval()
 
 test_loader = DataLoader(
-    test_set, batch_size=BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS
+    test_set, batch_size=batch_size, shuffle=False, num_workers=num_workers
 )
 
 print("Evaluating on test set")
@@ -140,8 +113,6 @@ for label in range(n_labels):
 
 average_auc = round(np.mean(auc_roc_scores), 4)
 average_f1 = round(np.mean(f1_scores_list), 4)
-print("Average AUC: ", average_auc)
-print("Average F1 Score: ", average_f1)
 
 save_data = {
     "f1_mapping": f1_mappping,
@@ -151,5 +122,9 @@ save_data = {
     "loss": loss,
 }
 
+print("Average AUC:", average_auc)
+print("Average F1:", average_f1)
+
+exp_path = get_exp_path(exp_id)
 with open(f"{exp_path}/eval_data.pkl", "wb") as f:
     pickle.dump(save_data, f)

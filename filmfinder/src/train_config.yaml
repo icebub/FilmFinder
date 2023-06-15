@@ -1,0 +1,7 @@
+pretrain_model: "bert-base-uncased"
+loss_fn: "BalancedLogLoss"
+batch_size: 8
+seed: 42
+val_set_size: 0.1
+test_set_size: 0.1
+num_workers: 0

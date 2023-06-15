@@ -38,12 +38,14 @@ class TestPredict(unittest.TestCase):
 
         with patch("api_core.load_transformer_model") as mock_load_transformer_model:
             mock_load_transformer_model.return_value = None, None
-            model, tokenizer, reverse_mapping, thresholds, f1_mappping = load_model(
+            _, _, reverse_mapping, thresholds, f1_mappping = load_model(
                 config["exp_id"], device
             )
 
         self.assertGreater(len(f1_mappping.keys()), 0)
-        print(f1_mappping[0])
+        self.assertEqual(len(f1_mappping.keys()), len(thresholds))
+        self.assertEqual(len(f1_mappping.keys()), len(reverse_mapping.keys()))
+
         for label in f1_mappping.keys():
             for conf in range(1001):
                 pred = str(format((conf / 1000), ".3f"))
