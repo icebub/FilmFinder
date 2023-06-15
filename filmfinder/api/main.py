@@ -1,38 +1,29 @@
-from typing import List
-
 import torch
 from api_core import load_model, predict
 from fastapi import FastAPI
-from pydantic import BaseModel
-
-
-class BaseRequest(BaseModel):
-    text: str
-
-
-class Genre(BaseModel):
-    genre: str
-    confidence: float
-
-
-class ResponseGenre(BaseModel):
-    genres: List[Genre]
-
+from schema import BaseRequest, ResponseGenre
 
 app = FastAPI()
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print("Server is running on device: ", device)
 
-exp_id = "N_202306132218"
-model, tokenizer, reverse_mapping, thresholds, f1_mappping = load_model(exp_id, device)
+@app.on_event("startup")
+async def startup_event():
+    global model, tokenizer, reverse_mapping, thresholds, f1_mappping, device
 
-sample_text = "Miles Morales catapults across the Multiverse, where he encounters a team of Spider-People charged with protecting its very existence. When the heroes clash on how to handle a new threat, Miles must redefine what it means to be a hero."
-return_list = predict(
-    sample_text, model, tokenizer, reverse_mapping, thresholds, f1_mappping, device
-)
-print("Sample text: ", sample_text)
-print("Predicted labels: ", return_list)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print("Server is running on device: ", device)
+
+    exp_id = "N_202306132218"
+    model, tokenizer, reverse_mapping, thresholds, f1_mappping = load_model(
+        exp_id, device
+    )
+
+    sample_text = "Miles Morales catapults across the Multiverse, where he encounters a team of Spider-People charged with protecting its very existence. When the heroes clash on how to handle a new threat, Miles must redefine what it means to be a hero."
+    return_list = predict(
+        sample_text, model, tokenizer, reverse_mapping, thresholds, f1_mappping, device
+    )
+    print("Sample text: ", sample_text)
+    print("Predicted labels: ", return_list)
 
 
 @app.post("/overview")

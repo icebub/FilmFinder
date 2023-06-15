@@ -15,7 +15,6 @@ from transformers import BertTokenizer
 
 from filmfinder.src.models.BaseModel import BaseModel
 from filmfinder.src.modules.BertMultiLabelClassifier import BertMultiLabelClassifier
-from filmfinder.src.modules.loss_fn import balanced_log_loss
 
 
 def load_model(exp_id, device):
@@ -50,6 +49,12 @@ def load_model(exp_id, device):
     return model, tokenizer, reverse_mapping, thresholds, f1_mappping
 
 
+def model_predict(model, input_ids, attention_mask, device):
+    with torch.no_grad():
+        outputs = model(input_ids.to(device), attention_mask.to(device))
+    return outputs.sigmoid().cpu().numpy().reshape(-1)
+
+
 def predict(
     text,
     model,
@@ -68,13 +73,10 @@ def predict(
         padding="max_length",
         return_tensors="pt",
     )
-    input_ids = encoding["input_ids"]
-    attention_mask = encoding["attention_mask"]
+    outputs = model_predict(
+        model, encoding["input_ids"], encoding["attention_mask"], device
+    )
 
-    with torch.no_grad():
-        outputs = model(input_ids.to(device), attention_mask.to(device))
-
-    outputs = outputs.sigmoid().cpu().numpy().reshape(-1)
     return_list = []
     for label in range(len(outputs)):
         if outputs[label] >= thresholds[label]:
