@@ -92,7 +92,7 @@ res = requests.post(url, json={"overview": text})
 print (res.json())
 ```
 
-### exmaple return
+### example return
 ```
 [{'genre': 'Family', 'confidence': 0.7903}, {'genre': 'Animation', 'confidence': 0.6667}, {'genre': 'Comedy', 'confidence': 0.6007}, {'genre': 'Adventure', 'confidence': 0.5714}, {'genre': 'Fantasy', 'confidence': 0.4171}]
 ```
