@@ -28,9 +28,15 @@ async def startup_event():
     print("Predicted labels: ", return_list)
 
 
-@app.post("/overview")
+@app.post("/")
 async def process_req(request: BaseRequest, response_model=ResponseGenre):
     return_list = predict(
-        request.text, model, tokenizer, reverse_mapping, thresholds, f1_mappping, device
+        request.overview,
+        model,
+        tokenizer,
+        reverse_mapping,
+        thresholds,
+        f1_mappping,
+        device,
     )
     return return_list

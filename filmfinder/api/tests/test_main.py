@@ -9,14 +9,14 @@ from main import app
 class TestPredict(unittest.TestCase):
     def test_predict_genre(self):
         with TestClient(app) as client:
-            api_path = "/overview"
+            api_path = "/"
 
             sample_text = "Miles Morales catapults across the Multiverse, where he encounters a team of Spider-People charged with protecting its very existence. When the heroes clash on how to handle a new threat, Miles must redefine what it means to be a hero."
-            response = client.post(api_path, json={"text": sample_text})
+            response = client.post(api_path, json={"overview": sample_text})
             self.assertEqual(response.status_code, 200)
 
             # Test with empty input
-            response = client.post(api_path, json={"text": ""})
+            response = client.post(api_path, json={"overview": ""})
             self.assertEqual(response.status_code, 200)
 
             # Test with missing input
@@ -25,11 +25,11 @@ class TestPredict(unittest.TestCase):
 
             # Test with input exceeding character limit
             sample_text = "a" * 10001
-            response = client.post(api_path, json={"text": sample_text})
+            response = client.post(api_path, json={"overview": sample_text})
             self.assertEqual(response.status_code, 200)
 
             # Test with invalid input type still converts to string
-            response = client.post(api_path, json={"text": 123})
+            response = client.post(api_path, json={"overview": 123})
             self.assertEqual(response.status_code, 200)
 
     def test_model_file(self):

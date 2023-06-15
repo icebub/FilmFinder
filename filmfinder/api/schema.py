@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 
 class BaseRequest(BaseModel):
-    text: str
+    overview: str
 
 
 class Genre(BaseModel):
