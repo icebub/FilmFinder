@@ -107,10 +107,12 @@ for label in range(n_labels):
     auc = metrics.roc_auc_score(labels, preds)
     auc_roc_scores.append(auc)
 
-    thresholds = np.linspace(0, 1, 1000)
     last_precision = 0
     f1_scores = []
-    for threshold in thresholds:
+    thresholds = []
+    for threshold in range(1001):
+        threshold = threshold / 1000
+
         labels = all_labels[:, label]
         preds = all_preds[:, label]
         preds = 1 / (1 + np.exp(-preds))
@@ -118,6 +120,7 @@ for label in range(n_labels):
         f1_scores.append(metrics.f1_score(labels, y_pred))
 
         threshold = str(format(threshold, ".3f"))
+        thresholds.append(threshold)
         if np.sum(y_pred) == 0:
             precision = last_precision
         else:
@@ -131,7 +134,7 @@ for label in range(n_labels):
     print("Class:", reverse_mapping[label])
     print("Best Threshold:", best_threshold)
     print("Best F1 Score:", best_f1_score)
-    best_threshold_list.append(best_threshold)
+    best_threshold_list.append(float(best_threshold))
     f1_scores_list.append(best_f1_score)
 
 

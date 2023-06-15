@@ -1,10 +1,9 @@
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-from api_core import load_model, predict
+from api_core import load_config, load_model
 from fastapi.testclient import TestClient
 from main import app
-from schema import BaseRequest, ResponseGenre
 
 
 class TestPredict(unittest.TestCase):
@@ -29,6 +28,23 @@ class TestPredict(unittest.TestCase):
             response = client.post(api_path, json={"text": sample_text})
             self.assertEqual(response.status_code, 200)
 
-            # Test with invalid input type still works
+            # Test with invalid input type still converts to string
             response = client.post(api_path, json={"text": 123})
             self.assertEqual(response.status_code, 200)
+
+    def test_model_file(self):
+        config = load_config()
+        device = "cpu"
+
+        with patch("api_core.load_transformer_model") as mock_load_transformer_model:
+            mock_load_transformer_model.return_value = None, None
+            model, tokenizer, reverse_mapping, thresholds, f1_mappping = load_model(
+                config["exp_id"], device
+            )
+
+        self.assertGreater(len(f1_mappping.keys()), 0)
+        print(f1_mappping[0])
+        for label in f1_mappping.keys():
+            for conf in range(1001):
+                pred = str(format((conf / 1000), ".3f"))
+                self.assertIsNotNone(f1_mappping[label][pred])

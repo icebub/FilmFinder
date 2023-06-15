@@ -5,6 +5,7 @@ import pickle
 import numpy as np
 import pytorch_lightning as pl
 import torch
+import yaml
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import TensorBoardLogger
@@ -15,6 +16,13 @@ from transformers import BertTokenizer
 
 from filmfinder.src.models.BaseModel import BaseModel
 from filmfinder.src.modules.BertMultiLabelClassifier import BertMultiLabelClassifier
+
+
+def load_config():
+    abs_folder = os.path.dirname(os.path.abspath(__file__))
+    with open(f"{abs_folder}/config.yaml", "r") as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)
+    return config
 
 
 def load_model(exp_id, device):
@@ -34,6 +42,14 @@ def load_model(exp_id, device):
     f1_mappping = eval_data["f1_mapping"]
     thresholds = eval_data["thresholds"]
 
+    model, tokenizer = load_transformer_model(
+        exp_path, pretrain_model, num_class, device
+    )
+
+    return model, tokenizer, reverse_mapping, thresholds, f1_mappping
+
+
+def load_transformer_model(exp_path, pretrain_model, num_class, device):
     model_checkpoint = f"{exp_path}/best_model.ckpt"
 
     tokenizer = BertTokenizer.from_pretrained(pretrain_model)
@@ -46,13 +62,13 @@ def load_model(exp_id, device):
     model.to(device)
     model.eval()
 
-    return model, tokenizer, reverse_mapping, thresholds, f1_mappping
+    return model, tokenizer
 
 
 def model_predict(model, input_ids, attention_mask, device):
     with torch.no_grad():
         outputs = model(input_ids.to(device), attention_mask.to(device))
-    return outputs.sigmoid().cpu().numpy().reshape(-1)
+    return outputs.sigmoid().cpu().numpy().reshape(-1).tolist()
 
 
 def predict(

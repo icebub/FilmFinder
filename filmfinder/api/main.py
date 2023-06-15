@@ -1,5 +1,5 @@
 import torch
-from api_core import load_model, predict
+from api_core import load_config, load_model, predict
 from fastapi import FastAPI
 from schema import BaseRequest, ResponseGenre
 
@@ -10,10 +10,12 @@ app = FastAPI()
 async def startup_event():
     global model, tokenizer, reverse_mapping, thresholds, f1_mappping, device
 
+    config = load_config()
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("Server is running on device: ", device)
 
-    exp_id = "N_202306132218"
+    exp_id = config["exp_id"]
     model, tokenizer, reverse_mapping, thresholds, f1_mappping = load_model(
         exp_id, device
     )
