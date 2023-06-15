@@ -50,6 +50,10 @@ extract zipfile to
     filmfinder/experiments/N_202306132218/label_data.json
 
 ### or use any new train model under filmfinder/experiments
+setup api config on 
+```
+filmfinder/api/config.yaml
+```
 
 # RUN API 
 have 2 options
