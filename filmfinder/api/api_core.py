@@ -16,6 +16,7 @@ from transformers import BertTokenizer
 
 from filmfinder.src.models.BaseModel import BaseModel
 from filmfinder.src.modules.BertMultiLabelClassifier import BertMultiLabelClassifier
+from filmfinder.src.modules.utils import get_exp_path
 
 
 def load_config():
@@ -26,8 +27,7 @@ def load_config():
 
 
 def load_model(exp_id, device):
-    abs_folder = os.path.dirname(os.path.abspath(__file__))
-    exp_path = f"{abs_folder}/../experiments/{exp_id}"
+    exp_path = get_exp_path(exp_id)
 
     with open(f"{exp_path}/label_data.json", "r") as f:
         model_data = json.load(f)
@@ -56,7 +56,7 @@ def load_transformer_model(exp_path, pretrain_model, num_class, device):
     model = BaseModel(pretrain_model, num_classes=num_class, freeze_bert=True)
 
     pl_module = BertMultiLabelClassifier.load_from_checkpoint(
-        model_checkpoint, model=model
+        model_checkpoint, model=model, map_location=device
     )
     model = pl_module.model
     model.to(device)

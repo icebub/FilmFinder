@@ -1,12 +1,12 @@
 import os
 
 import yaml
-from datasets.MovieGenres import CustomDataset, MovieGenres
-from models.BaseModel import BaseModel
-from modules.BertMultiLabelClassifier import BertMultiLabelClassifier
 from sklearn.model_selection import train_test_split
-from torch.utils.data import DataLoader
 from transformers import BertTokenizer
+
+from filmfinder.src.datasets.MovieGenres import CustomDataset, MovieGenres
+from filmfinder.src.models.BaseModel import BaseModel
+from filmfinder.src.modules.BertMultiLabelClassifier import BertMultiLabelClassifier
 
 
 def load_config():
@@ -79,6 +79,7 @@ def load_pl_module(
     num_class=20,
     class_weights=None,
     loss_fn="BCEWithLogitsLoss",
+    device="cpu",
 ):
     tokenizer = BertTokenizer.from_pretrained(pretrain_model)
     model = BaseModel(pretrain_model, num_classes=num_class, freeze_bert=True)
@@ -88,11 +89,15 @@ def load_pl_module(
         model_checkpoint = f"{exp_path}/best_model.ckpt"
         print("Loading model from checkpoint: ", model_checkpoint)
         pl_module = BertMultiLabelClassifier.load_from_checkpoint(
-            model_checkpoint, model=model
+            model_checkpoint,
+            model=model,
+            map_location=device,
         )
     else:
         print("Training from scratch")
         pl_module = BertMultiLabelClassifier(
-            model, loss_fn=loss_fn, class_weight=class_weights
+            model,
+            loss_fn=loss_fn,
+            class_weight=class_weights,
         )
     return pl_module, tokenizer
