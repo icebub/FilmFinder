@@ -1,19 +1,9 @@
-import json
 import os
-import pickle
-import sys
-from collections import defaultdict
 
-import numpy as np
-import torch
 import yaml
 from datasets.MovieGenres import CustomDataset, MovieGenres
 from models.BaseModel import BaseModel
 from modules.BertMultiLabelClassifier import BertMultiLabelClassifier
-from modules.loss_fn import balanced_log_loss
-from pytorch_lightning.callbacks import EarlyStopping
-from pytorch_lightning.callbacks.early_stopping import EarlyStopping
-from sklearn import metrics
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 from transformers import BertTokenizer
