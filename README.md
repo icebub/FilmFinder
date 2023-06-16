@@ -46,9 +46,11 @@ download model from
     https://drive.google.com/file/d/1vW7QLO6e2-h0gBII9yjPE15RNzYXpV8M/view?usp=sharing
 
 extract zipfile to
+```
     filmfinder/experiments/N_202306132218/best_model.ckpt
     filmfinder/experiments/N_202306132218/eval_data.pkl
     filmfinder/experiments/N_202306132218/label_data.json
+```
 
 ### or use any new train model under filmfinder/experiments
 setup api config on 
