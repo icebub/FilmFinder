@@ -69,7 +69,7 @@ Run docker
 docker run -p 8000:8000 film
 ```
 
-## 2. Install locally
+## 2. Run locally
 
 from root directory
 ```

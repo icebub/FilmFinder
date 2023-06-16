@@ -2,16 +2,8 @@ import json
 import os
 import pickle
 
-import numpy as np
-import pytorch_lightning as pl
 import torch
 import yaml
-from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
-from pytorch_lightning.callbacks.early_stopping import EarlyStopping
-from pytorch_lightning.loggers import TensorBoardLogger
-from sklearn import metrics
-from sklearn.model_selection import train_test_split
-from torch.utils.data import DataLoader
 from transformers import BertTokenizer
 
 from filmfinder.src.models.BaseModel import BaseModel
