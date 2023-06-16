@@ -22,8 +22,9 @@ download dataset from
     https://www.kaggle.com/datasets/rounakbanik/the-movies-dataset?select=movies_metadata.csv
 
 to 
-    filmfinder/src/data/movies_metadata.csv
-
+```
+filmfinder/src/data/movies_metadata.csv
+```
 
 ### Setup training params
 filmfinder/src/train_config.yaml  
