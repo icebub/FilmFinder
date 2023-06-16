@@ -1,5 +1,6 @@
 import os
 
+import torch
 import yaml
 from sklearn.model_selection import train_test_split
 from transformers import BertTokenizer
@@ -47,7 +48,7 @@ def prepare_training(
     ) = load_dataset(data_path)
 
     pl_module, tokenizer = load_pl_module(
-        exp_id, pretrain_model, num_class, class_weights
+        exp_id, pretrain_model, num_class, class_weights, config["loss_fn"]
     )
 
     dataset = CustomDataset(texts, labels, tokenizer, max_length=512)
@@ -79,8 +80,11 @@ def load_pl_module(
     num_class=20,
     class_weights=None,
     loss_fn="BCEWithLogitsLoss",
-    device="cpu",
+    device=None,
 ):
+    if device is None:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     tokenizer = BertTokenizer.from_pretrained(pretrain_model)
     model = BaseModel(pretrain_model, num_classes=num_class, freeze_bert=True)
 
