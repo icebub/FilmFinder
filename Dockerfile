@@ -8,5 +8,4 @@ RUN pip install -e .
 
 WORKDIR /app/filmfinder/api
 
-CMD "uvicorn main:app --host 0.0.0.0 --port 8000"
 ENTRYPOINT ["uvicorn", "main:app", "--host", "0.0 0.0", "--port", "8000"]
